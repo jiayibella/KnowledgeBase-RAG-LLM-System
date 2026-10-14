@@ -1,6 +1,7 @@
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough, RunnableWithMessageHistory, RunnableLambda
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from langchain_core.runnables.history import RunnableWithMessageHistory
 from file_history_store import get_history
 from vector_stores import VectorStoreService
 from langchain_community.embeddings import DashScopeEmbeddings
@@ -25,15 +26,29 @@ class RagService(object):
         )
 
         self.prompt_template = ChatPromptTemplate.from_messages(
-            [
-                ("system", "以我提供的已知参考资料为主，"
-                 "简洁和专业的回答用户问题。参考资料:{context}。"),
-                ("system", "并且我提供用户的对话历史记录，如下："),
-                MessagesPlaceholder("history"),
-                ("user", "请回答用户提问：{input}")
-            ]
-        )
-
+          [ 
+            (
+            "system",
+            "你是一个服装尺码推荐助手，请严格依据参考资料回答，"
+            "不要使用参考资料之外的尺码规则。\n"
+            "参考资料：{context}\n"
+            "请遵守以下规则：\n"
+            "1. 用户提供公斤时，按照1公斤等于2斤进行换算。\n"
+            "2. 只有身高和体重同时落在同一条尺码规则的范围内，"
+            "才能推荐该尺码。\n"
+            "3. 如果当前问题和历史对话中缺少身高或体重，"
+            "先询问缺少的信息，不要直接推荐尺码。\n"
+            "4. 如果没有任何尺码同时满足身高和体重条件，"
+            "明确说明没有完全匹配的尺码，不要猜测。\n"
+            "5. 如果多个尺码同时满足条件，列出候选尺码，"
+            "并询问用户喜欢合身还是宽松。\n"
+            "6. 回答时简要说明单位换算和匹配依据。"
+            ),
+        MessagesPlaceholder("history"),
+        ("user", "请回答用户提问：{input}")
+          ]
+       ) 
+ 
         self.chat_model = ChatTongyi(model=config.chat_model_name)
 
         self.chain = self.__get_chain()

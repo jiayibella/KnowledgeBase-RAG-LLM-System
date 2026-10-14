@@ -21,6 +21,7 @@ langchain-text-splitters>=0.0.2
 chromadb>=0.4.24,<0.5.0
 # 向量计算、数值处理基础依赖（锁定兼容版本，避免2.0+兼容性问题）
 numpy>=1.24.0,<2.0.0
+pyarrow==16.1.0
 
 # ===================== 阿里云通义千问SDK与网络依赖 =====================
 # 阿里云DashScope官方SDK（通义千问qwen3-max、text-embedding-v4嵌入模型）

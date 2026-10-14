@@ -13,3 +13,12 @@ data/
 .idea/
 .vscode/
 .DS_Store
+
+# Local generated data
+chroma_db/
+md5.text
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example

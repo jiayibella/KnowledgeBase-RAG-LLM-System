@@ -26,6 +26,23 @@
 
 > 适合作为 RAG 入门实践：结构清晰、依赖轻量、无需 GPU，替换自己的业务文本即可迁移到实际场景。
 
+## 本次复现与优化
+
+本项目基于原开源项目完成本地复现，并针对依赖兼容性、尺码推荐准确性和异常处理进行了二次优化。
+
+### 主要优化
+
+- **修复依赖兼容问题**：调整 LangChain 消息历史组件的导入路径，并处理 PyArrow 与 NumPy 的版本冲突。
+- **修复消息结构问题**：合并重复的 System Message，解决通义千问只接受一条系统消息的报错。
+- **新增尺码规则引擎**：使用 Python 对身高和体重进行严格区间匹配，避免大模型在数值判断中产生不稳定结果。
+- **支持多轮信息补全**：用户只输入身高时，系统会继续追问体重，并通过 `st.session_state` 保存上下文。
+- **支持单位换算**：自动识别公斤、千克、kg 和斤，并统一换算后匹配尺码规则。
+- **支持穿着偏好推荐**：多个尺码同时满足时，可根据“合身”或“宽松”偏好选择候选尺码。
+- **实现业务分流**：尺码问题交给 Python 规则引擎，洗涤养护等开放问题继续使用 RAG 与大模型回答。
+- **新增异常处理**：使用 `try...except` 捕获模型或网络调用异常，向用户显示友好提示。
+- **新增自动测试**：使用 `assert` 验证尺码匹配和信息提取结果，支持后续回归测试。
+- **完善安全配置**：通过 `.gitignore` 排除本地向量库、聊天记录、缓存和环境变量文件。
+
 ## 效果展示
 
 <div align="center">
@@ -40,6 +57,14 @@
   <img src="./assets/chat_demo2.png" width="720" alt="连续追问">
   <br>
   <em>图 2 · 结合历史消息的连续追问</em>
+</div>
+
+<br>
+
+<div align="center">
+  <img src="./assets/size_recommendation_demo.png" width="720" alt="多轮尺码推荐">
+  <br>
+  <em>图 3 · Python 规则引擎与多轮信息补全的尺码推荐</em>
 </div>
 
 示例知识库预置了衣物尺码推荐、材质洗涤养护、颜色搭配等内容（见 `assets/*.txt`），对标电商客服场景，可直接替换为自己的业务文本。
@@ -67,6 +92,8 @@
 | `vector_stores.py` | 向量库检索封装（Chroma 持久化） |
 | `file_history_store.py` | 会话历史存储（FileChatMessageHistory） |
 | `config_data.py` | 模型、路径、chunk 等核心配置 |
+| `size_recommender.py` | 尺码规则引擎：信息提取、单位换算、区间匹配和回答生成 |
+| `test_size_recommender.py` | 尺码规则自动测试与回归测试 |
 
 ## 快速开始
 
@@ -118,7 +145,7 @@ streamlit run app_chat.py
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
 | `embedding_model_name` | `text-embedding-v4` | Embedding 模型 |
-| `chat_model_name` | `qwen3-max` | 对话模型 |
+| `chat_model_name` | `qwen-max` | 对话模型 |
 | `chunk_size` / `chunk_overlap` | `1000` / `100` | 文本切分粒度 |
 | `similarity_threshold` | `1` | 检索返回的文档数量 |
 | `persist_directory` | `./chroma_db` | 向量库持久化目录 |
